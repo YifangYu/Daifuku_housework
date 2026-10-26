@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>肥肥家事紀錄</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f4f4f6',
+                            100: '#e6e6eb',
+                            500: '#1c1c1e',
+                            600: '#121214',
+                            accent: '#3b82f6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Mobile Viewport and Safe Area Support for iPhone 15 Pro */
+        .pb-safe-nav {
+            padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 20px));
+        }
+        .pt-safe {
+            padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen font-sans antialiased transition-colors duration-200 selection:bg-zinc-800 selection:text-white">
+    <div id="app" class="max-w-3xl mx-auto min-h-screen flex flex-col border-x border-gray-100 dark:border-zinc-900 shadow-sm bg-white dark:bg-zinc-900 relative">
+        
+        <!-- Header -->
+        <header class="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800/80 px-4 py-3 sm:px-6 flex items-center justify-between pt-safe">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+                    肥
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">肥肥家事紀錄</h1>
+                    <!-- Custom Editable Subtitle -->
+                    <div class="flex items-center space-x-1 group cursor-pointer" onclick="editSubtitle()" id="subtitle-container" title="點擊編輯個人自訂文字">
+                        <span id="custom-subtitle-text" class="text-xs text-gray-500 dark:text-zinc-400 font-normal border-b border-dashed border-gray-300 dark:border-zinc-700 hover:border-gray-500 dark:hover:border-zinc-400 transition-colors">
+                            輕鬆生活紀錄
+                        </span>
+                        <i data-lucide="pencil" class="w-2.5 h-2.5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-zinc-300"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center space-x-2">
+                <button onclick="openBackupModal()" aria-label="備份與還原" title="備份與還原" class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+                    <i data-lucide="database-backup" class="w-5 h-5"></i>
+                </button>
+                <button onclick="toggleDarkMode()" aria-label="切換深色模式" class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+                    <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                    <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                </button>
+                <button onclick="openItemFormModal()" aria-label="新增項目" class="bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 px-3.5 py-1.5 rounded-xl text-sm font-medium flex items-center space-x-1.5 shadow-sm transition-transform active:scale-95 shrink-0">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>新增項目</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content View Container -->
+        <main class="flex-1 p-4 sm:p-6 space-y-6 pb-safe-nav">
+            
+            <!-- VIEW 1: ITEMS CARDS LIST (DEFAULT) -->
+            <section id="view-items" class="space-y-4">
+                <!-- Top Overview & Filter Bar -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gray-50 dark:bg-zinc-800/50 p-3.5 rounded-2xl border border-gray-100 dark:border-zinc-800">
+                    <div class="flex items-center space-x-2 text-xs font-medium text-gray-600 dark:text-zinc-400">
+                        <span id="stat-summary" class="bg-white dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-gray-200/60 dark:border-zinc-700/60 shadow-xs">共 0 個項目</span>
+                        <span id="stat-recent" class="bg-white dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-gray-200/60 dark:border-zinc-700/60 shadow-xs">最近 7 天完成 0 次</span>
+                    </div>
+
+                    <!-- Search & Category Filter -->
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex-1 sm:w-44">
+                            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="search-input" oninput="renderCards()" placeholder="搜尋項目..." class="w-full pl-8 pr-3 py-1 text-xs bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                        </div>
+                        <select id="sort-select" onchange="renderCards()" class="text-xs bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none text-gray-700 dark:text-zinc-300">
+                            <option value="days-desc">久未完成優先</option>
+                            <option value="days-asc">近期完成優先</option>
+                            <option value="title">名稱排序</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Category Pills Filter -->
+                <div id="category-pills" class="flex items-center space-x-1.5 overflow-x-auto pb-1 hide-scrollbar">
+                    <!-- Dynamic categories -->
+                </div>
+
+                <!-- Chores Cards Grid -->
+                <div id="cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                    <!-- Dynamic Cards -->
+                </div>
+
+                <!-- Floating Quick Add Button -->
+                <div class="pt-2 flex justify-center">
+                    <button onclick="openItemFormModal()" class="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 border border-gray-200/80 dark:border-zinc-700 px-5 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center space-x-2 transition-transform active:scale-98 shadow-xs">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>新增紀錄項目</span>
+                    </button>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden py-16 text-center space-y-3">
+                    <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto text-gray-400">
+                        <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+                    </div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-zinc-300">目前沒有任何紀錄項目</p>
+                    <p class="text-xs text-gray-400">點擊右上角或下方按鈕新增第一個家事卡片吧！</p>
+                    <button onclick="openItemFormModal()" class="inline-flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold pt-2">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>立即新增第一個家事</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- VIEW 2: CALENDAR VIEW -->
+            <section id="view-calendar" class="hidden space-y-4">
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200/80 dark:border-zinc-800 p-4 sm:p-5 shadow-xs">
+                    <!-- Calendar Header Controls -->
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 id="calendar-month-year" class="text-base font-bold text-gray-900 dark:text-zinc-100">2026 年 10 月</h2>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="changeCalMonth(-1)" aria-label="上個月" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-zinc-400">
+                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="resetCalToday()" class="px-2.5 py-1 text-xs font-medium bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg text-gray-700 dark:text-zinc-300">今天</button>
+                            <button onclick="changeCalMonth(1)" aria-label="下個月" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-zinc-400">
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Days of Week Header -->
+                    <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                        <span class="text-xs font-semibold text-gray-400">日</span>
+                        <span class="text-xs font-semibold text-gray-400">一</span>
+                        <span class="text-xs font-semibold text-gray-400">二</span>
+                        <span class="text-xs font-semibold text-gray-400">三</span>
+                        <span class="text-xs font-semibold text-gray-400">四</span>
+                        <span class="text-xs font-semibold text-gray-400">五</span>
+                        <span class="text-xs font-semibold text-gray-400">六</span>
+                    </div>
+
+                    <!-- Calendar Days Grid -->
+                    <div id="calendar-days" class="grid grid-cols-7 gap-1">
+                        <!-- Dynamic Calendar Cells -->
+                    </div>
+                </div>
+
+                <!-- Selected Date Log List -->
+                <div class="bg-gray-50 dark:bg-zinc-800/40 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4">
+                    <h3 id="calendar-selected-date-title" class="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">所選日期的紀錄</h3>
+                    <div id="calendar-date-logs" class="space-y-2">
+                        <!-- Dynamic day logs -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: STATS / REPORTS -->
+            <section id="view-stats" class="hidden space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800">
+                        <span class="text-xs text-gray-500 dark:text-zinc-400 block mb-1">追蹤項目總數</span>
+                        <span id="stat-total-items" class="text-2xl font-bold">0</span>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800">
+                        <span class="text-xs text-gray-500 dark:text-zinc-400 block mb-1">歷史紀錄總筆數</span>
+                        <span id="stat-total-logs" class="text-2xl font-bold">0</span>
+                    </div>
+                </div>
+
+                <!-- Items Frequency Stats List -->
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200/80 dark:border-zinc-800 p-4 sm:p-5">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-4 flex items-center justify-between">
+                        <span>各項目平均執行頻率</span>
+                        <span class="text-xs font-normal text-gray-400">（根據歷史紀錄計算）</span>
+                    </h3>
+                    <div id="stats-frequency-list" class="space-y-3">
+                        <!-- Dynamic Frequency items -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-gray-200/80 dark:border-zinc-800 px-6 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-30 flex items-center justify-around shadow-lg">
+            <button onclick="switchTab('view-items', this)" class="nav-tab text-zinc-900 dark:text-zinc-100 flex flex-col items-center py-1 px-3 space-y-1 transition-colors">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">項目</span>
+            </button>
+            <button onclick="switchTab('view-calendar', this)" class="nav-tab text-gray-400 hover:text-gray-700 dark:hover:text-zinc-300 flex flex-col items-center py-1 px-3 space-y-1 transition-colors">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">日曆</span>
+            </button>
+            <button onclick="switchTab('view-stats', this)" class="nav-tab text-gray-400 hover:text-gray-700 dark:hover:text-zinc-300 flex flex-col items-center py-1 px-3 space-y-1 transition-colors">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">統計</span>
+            </button>
+        </nav>
+
+        <!-- MODAL: Detail & Timeline Modal -->
+        <div id="detail-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+            <div class="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200/80 dark:border-zinc-800 overflow-hidden pb-[env(safe-area-inset-bottom,0px)]">
+                <!-- Modal Header -->
+                <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-zinc-800 flex items-start justify-between bg-gray-50/50 dark:bg-zinc-800/30">
+                    <div class="flex items-center space-x-3">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h2 id="modal-item-title" class="text-lg font-bold text-gray-900 dark:text-zinc-100">家事名稱</h2>
+                                <span id="modal-item-category" class="text-[10px] px-2 py-0.5 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-zinc-300 font-medium">分類</span>
+                            </div>
+                            <p id="modal-item-subtitle" class="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">預期目標：約每 14 天一次</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <!-- Direct Delete Button (Header Red Trash Icon) -->
+                        <button onclick="handleActiveItemDelete()" aria-label="刪除卡片" class="p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors cursor-pointer" title="刪除這張卡片">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                        <!-- Edit Button -->
+                        <button onclick="handleActiveItemEdit()" aria-label="編輯項目" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors" title="編輯項目">
+                            <i data-lucide="edit-3" class="w-5 h-5"></i>
+                        </button>
+                        <!-- Close Button -->
+                        <button onclick="closeDetailModal()" aria-label="關閉視窗" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Content Scroll Area -->
+                <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6">
+                    <!-- Primary Highlight Banner -->
+                    <div class="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 p-4 rounded-2xl flex items-center justify-between shadow-xs">
+                        <div>
+                            <span class="text-xs opacity-80 block">距離上次完成已經經過</span>
+                            <div class="text-2xl font-bold tracking-tight" id="modal-days-count">0 天</div>
+                        </div>
+                        <button onclick="handleModalQuickToday()" class="bg-white/20 dark:bg-black/10 hover:bg-white/30 dark:hover:bg-black/20 text-white dark:text-zinc-900 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 backdrop-blur-xs transition-colors">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>今天完成了</span>
+                        </button>
+                    </div>
+
+                    <!-- Manual Backdate Input Area -->
+                    <div class="bg-gray-50 dark:bg-zinc-800/50 p-3.5 rounded-2xl border border-gray-100 dark:border-zinc-800">
+                        <label class="text-xs font-medium text-gray-700 dark:text-zinc-300 block mb-2">補登過往紀錄（選擇任意日期）</label>
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="backdate-picker" class="flex-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-gray-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                            <input type="text" id="backdate-note" placeholder="備註（選填）" class="flex-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-gray-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                            <button onclick="handleBackdateSubmit()" class="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs px-3.5 py-1.5 rounded-xl font-medium shrink-0 hover:opacity-90">補登</button>
+                        </div>
+                    </div>
+
+                    <!-- Historical Timeline -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-3">獨立時間軸歷史紀錄</h3>
+                        <div id="modal-timeline" class="relative pl-4 space-y-4 border-l-2 border-gray-100 dark:border-zinc-800">
+                            <!-- Dynamic Timeline entries -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Add / Edit Item Modal -->
+        <div id="item-form-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl p-5 shadow-2xl border border-gray-200/80 dark:border-zinc-800 space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-zinc-800">
+                    <h3 id="form-modal-title" class="text-base font-bold text-gray-900 dark:text-zinc-100">新增追蹤項目</h3>
+                    <button onclick="closeItemFormModal()" aria-label="關閉視窗" class="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form id="item-form" onsubmit="handleFormSubmit(event)" class="space-y-3.5">
+                    <input type="hidden" id="form-item-id">
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1">家事名稱 *</label>
+                        <input type="text" id="form-title" required placeholder="例如：洗棉被、洗枕頭套、換濾心" class="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                    </div>
+
+                    <div>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1">分類標籤</label>
+                            <input type="text" id="form-category" placeholder="清潔 / 家事 / 個人" class="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                        </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1">預計間隔週期（天）</label>
+                        <input type="number" id="form-interval" min="1" placeholder="14 (預設約幾天做一次)" class="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                        <p class="text-[10px] text-gray-400 mt-1">僅作為個人習慣參考，不會發出催促通知。</p>
+                    </div>
+
+                    <div id="initial-date-container">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1">第一次 / 最近一次做這件事的日期</label>
+                        <input type="date" id="form-initial-date" class="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-between gap-2">
+                        <button type="button" id="btn-delete-item-form" onclick="handleFormDeleteClick()" class="hidden text-xs text-red-500 hover:text-red-700 px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold">刪除此卡片</button>
+                        <div class="flex items-center space-x-2 ml-auto">
+                            <button type="button" onclick="closeItemFormModal()" class="px-4 py-2 text-xs font-medium text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl">取消</button>
+                            <button type="submit" class="px-4 py-2 text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl hover:opacity-90">儲存</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: In-page dialog (replaces confirm/prompt, which are blocked in sandboxed/embedded pages) -->
+        <div id="dialog-modal" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 hidden">
+            <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-gray-200/80 dark:border-zinc-800 space-y-4">
+                <p id="dialog-msg" class="text-sm text-gray-800 dark:text-zinc-100 whitespace-pre-wrap"></p>
+                <input type="text" id="dialog-input" class="hidden w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                <div class="flex items-center justify-end space-x-2">
+                    <button type="button" id="dialog-cancel" class="px-4 py-2 text-xs font-medium rounded-xl text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800">取消</button>
+                    <button type="button" id="dialog-ok" class="px-4 py-2 text-xs font-medium rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900">確定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Backup & Restore -->
+        <div id="backup-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white dark:bg-zinc-900 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl p-5 shadow-2xl border border-gray-200/80 dark:border-zinc-800 space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-zinc-800">
+                    <h3 class="text-base font-bold text-gray-900 dark:text-zinc-100">備份與還原</h3>
+                    <button onclick="closeBackupModal()" aria-label="關閉視窗" class="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-gray-500 dark:text-zinc-400">匯出備份</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportBackupFile()" class="px-4 py-2 text-xs font-medium rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900">下載備份檔 (.json)</button>
+                        <button onclick="copyBackupText()" class="px-4 py-2 text-xs font-medium rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300">複製備份文字</button>
+                    </div>
+                    <p class="text-[10px] text-gray-400">備份包含所有卡片、完成紀錄與副標題。可存到雲端硬碟或寄給自己。</p>
+                </div>
+
+                <div class="space-y-2 pt-3 border-t border-gray-100 dark:border-zinc-800">
+                    <h4 class="text-xs font-bold text-gray-500 dark:text-zinc-400">匯入備份</h4>
+                    <div class="flex items-center space-x-4 text-xs text-gray-700 dark:text-zinc-300">
+                        <label class="flex items-center space-x-1.5"><input type="radio" name="import-mode" value="merge" checked><span>合併（保留現有資料）</span></label>
+                        <label class="flex items-center space-x-1.5"><input type="radio" name="import-mode" value="replace"><span>覆蓋（取代現有資料）</span></label>
+                    </div>
+                    <input type="file" id="backup-file" accept=".json,application/json" onchange="handleBackupFile(this)" class="block w-full text-xs text-gray-600 dark:text-zinc-400 file:mr-3 file:px-3 file:py-1.5 file:rounded-xl file:border-0 file:text-xs file:bg-gray-100 dark:file:bg-zinc-800 file:text-gray-700 dark:file:text-zinc-300">
+                    <textarea id="backup-text" rows="3" placeholder="或把備份文字貼在這裡…" class="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 text-xs"></textarea>
+                    <button onclick="importBackupFromText(document.getElementById('backup-text').value)" class="px-4 py-2 text-xs font-medium rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 w-full">從貼上的文字匯入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-zinc-900/90 dark:bg-zinc-100/90 backdrop-blur-md text-white dark:text-zinc-900 px-4 py-2 rounded-2xl text-xs font-medium shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center space-x-2">
+            <i data-lucide="info" class="w-4 h-4"></i>
+            <span id="toast-msg">操作成功</span>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Global Application State
+        let items = [];
+        let currentFilterCategory = 'ALL';
+        let activeModalItemId = null;
+        let calendarCurrentDate = new Date();
+        let calendarSelectedDateStr = getFormattedDate(new Date());
+
+        // Helpers
+        function getFormattedDate(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function calculateDaysDiff(fromDateStr, toDateStr = getFormattedDate(new Date())) {
+            if (!fromDateStr) return null;
+            const from = new Date(fromDateStr);
+            const to = new Date(toDateStr);
+            from.setHours(0,0,0,0);
+            to.setHours(0,0,0,0);
+            const diffTime = to.getTime() - from.getTime();
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function getLatestLogDate(item) {
+            if (!item.logs || item.logs.length === 0) return null;
+            const sorted = [...item.logs].sort((a,b) => new Date(b.date) - new Date(a.date));
+            return sorted[0].date;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        // Icons must never break the app if the icon library fails to load
+        function refreshIcons() {
+            try { if (window.lucide) lucide.createIcons(); } catch (e) { console.warn('icons unavailable', e); }
+        }
+
+        // Safe storage (falls back to memory when localStorage is blocked)
+        const memoryStore = {};
+        let storageOk = true;
+        function storeGet(key) {
+            try { return localStorage.getItem(key); }
+            catch (e) { storageOk = false; return memoryStore[key] ?? null; }
+        }
+        function storeSet(key, value) {
+            memoryStore[key] = value;
+            try { localStorage.setItem(key, value); }
+            catch (e) { storageOk = false; }
+        }
+
+        // In-page dialogs (window.confirm/prompt/alert are silently blocked in sandboxed pages,
+        // which is why deleting a card appeared to do nothing)
+        function appDialog({ message, input = false, defaultValue = '', okText = '確定', danger = false }) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('dialog-modal');
+                const inputEl = document.getElementById('dialog-input');
+                const okBtn = document.getElementById('dialog-ok');
+                const cancelBtn = document.getElementById('dialog-cancel');
+                document.getElementById('dialog-msg').textContent = message;
+                inputEl.classList.toggle('hidden', !input);
+                inputEl.value = defaultValue;
+                okBtn.textContent = okText;
+                okBtn.className = 'px-4 py-2 text-xs font-medium rounded-xl ' + (danger
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900');
+                const done = (v) => {
+                    modal.classList.add('hidden');
+                    okBtn.onclick = cancelBtn.onclick = inputEl.onkeydown = null;
+                    resolve(v);
+                };
+                okBtn.onclick = () => done(input ? inputEl.value : true);
+                cancelBtn.onclick = () => done(input ? null : false);
+                inputEl.onkeydown = (e) => { if (e.key === 'Enter') okBtn.onclick(); };
+                modal.classList.remove('hidden');
+                if (input) { inputEl.focus(); inputEl.select(); }
+            });
+        }
+        const appConfirm = (message, okText = '確定', danger = false) => appDialog({ message, okText, danger });
+        const appPrompt = (message, defaultValue = '') => appDialog({ message, input: true, defaultValue });
+
+        // Storage & Initialization
+        function loadData() {
+            const saved = storeGet('last_when_feifei_data');
+            if (saved) {
+                try {
+                    items = JSON.parse(saved);
+                } catch(e) {
+                    items = [];
+                }
+            } else {
+                items = [];
+                saveData();
+            }
+
+            const savedSubtitle = storeGet('feifei_custom_subtitle');
+            if (savedSubtitle) {
+                document.getElementById('custom-subtitle-text').textContent = savedSubtitle;
+            }
+            renderAll();
+            if (!storageOk) showToast('⚠️ 此環境無法永久儲存，請記得定期匯出備份');
+        }
+
+        function saveData() {
+            storeSet('last_when_feifei_data', JSON.stringify(items));
+            renderAll();
+        }
+
+        function showToast(msg) {
+            const toastEl = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toastEl.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toastEl.classList.add('opacity-0', 'pointer-events-none');
+            }, 2200);
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        async function editSubtitle() {
+            const currentText = document.getElementById('custom-subtitle-text').textContent.trim();
+            const newText = await appPrompt('請輸入自訂副標題：', currentText);
+            if (newText !== null && newText.trim() !== '') {
+                document.getElementById('custom-subtitle-text').textContent = newText.trim();
+                storeSet('feifei_custom_subtitle', newText.trim());
+                showToast('副標題已更新');
+            }
+        }
+
+        // DIRECT DELETION ENGINE (RELIABLE & CLEAN)
+        async function executeDeleteCard(itemId) {
+            if (!itemId) return;
+            const target = items.find(i => i.id === itemId);
+            if (!target) return;
+
+            const confirmed = await appConfirm(`確定要徹底刪除卡片「${target.title}」及其所有紀錄嗎？\n此動作無法復原。`, '刪除', true);
+            if (confirmed) {
+                items = items.filter(i => i.id !== itemId);
+                saveData();
+
+                // Close all modals cleanly
+                closeDetailModal();
+                closeItemFormModal();
+
+                showToast(`已刪除「${target.title}」`);
+            }
+        }
+
+        function handleActiveItemDelete() {
+            if (activeModalItemId) {
+                executeDeleteCard(activeModalItemId);
+            }
+        }
+
+        function handleFormDeleteClick() {
+            const itemId = document.getElementById('form-item-id').value;
+            if (itemId) {
+                executeDeleteCard(itemId);
+            }
+        }
+
+        // Backup & Restore
+        function buildBackup() {
+            return {
+                app: 'feifei-chores',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                subtitle: document.getElementById('custom-subtitle-text').textContent.trim(),
+                items
+            };
+        }
+
+        function openBackupModal() {
+            document.getElementById('backup-modal').classList.remove('hidden');
+            refreshIcons();
+        }
+
+        function closeBackupModal() {
+            document.getElementById('backup-modal').classList.add('hidden');
+        }
+
+        function exportBackupFile() {
+            const json = JSON.stringify(buildBackup(), null, 2);
+            const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `feifei-backup-${getFormattedDate(new Date())}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast('已匯出備份檔');
+        }
+
+        async function copyBackupText() {
+            const json = JSON.stringify(buildBackup());
+            try {
+                await navigator.clipboard.writeText(json);
+                showToast('已複製備份文字');
+            } catch (e) {
+                const ta = document.getElementById('backup-text');
+                ta.value = json;
+                ta.select();
+                showToast('請手動複製文字框內容');
+            }
+        }
+
+        function newId(prefix) {
+            return prefix + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+        }
+
+        function normalizeItems(arr) {
+            return arr.filter(it => it && typeof it.title === 'string' && it.title.trim()).map(it => {
+                const seen = new Set();
+                const logs = (Array.isArray(it.logs) ? it.logs : [])
+                    .filter(l => l && /^\d{4}-\d{2}-\d{2}$/.test(l.date) && !seen.has(l.date) && seen.add(l.date))
+                    .map(l => ({ id: l.id || newId('log'), date: l.date, note: typeof l.note === 'string' ? l.note : '' }));
+                logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+                const interval = parseInt(it.targetInterval, 10);
+                return {
+                    id: it.id || newId('item'),
+                    title: it.title.trim(),
+                    category: it.category || '家事',
+                    targetInterval: interval > 0 ? interval : null,
+                    logs
+                };
+            });
+        }
+
+        function handleBackupFile(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => importBackupFromText(String(reader.result));
+            reader.onerror = () => showToast('無法讀取檔案');
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        async function importBackupFromText(text) {
+            let data, imported;
+            try {
+                data = JSON.parse(text);
+                const arr = Array.isArray(data) ? data : data.items;
+                if (!Array.isArray(arr)) throw new Error('no items');
+                imported = normalizeItems(arr);
+            } catch (e) {
+                showToast('備份內容格式不正確');
+                return;
+            }
+
+            const mode = document.querySelector('input[name="import-mode"]:checked').value;
+            const msg = mode === 'replace'
+                ? `將以備份內容覆蓋目前資料（備份內有 ${imported.length} 個項目），確定嗎？`
+                : `將把備份內的 ${imported.length} 個項目合併到目前資料，確定嗎？`;
+            if (!(await appConfirm(msg, '匯入', mode === 'replace'))) return;
+
+            if (mode === 'replace') {
+                items = imported;
+            } else {
+                imported.forEach(inc => {
+                    const existing = items.find(i => i.id === inc.id);
+                    if (!existing) {
+                        items.push(inc);
+                    } else {
+                        const dates = new Set((existing.logs || []).map(l => l.date));
+                        inc.logs.forEach(l => { if (!dates.has(l.date)) existing.logs.push(l); });
+                        existing.logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    }
+                });
+            }
+
+            if (!Array.isArray(data) && typeof data.subtitle === 'string' && data.subtitle.trim() && mode === 'replace') {
+                document.getElementById('custom-subtitle-text').textContent = data.subtitle.trim();
+                storeSet('feifei_custom_subtitle', data.subtitle.trim());
+            }
+
+            saveData();
+            document.getElementById('backup-text').value = '';
+            closeBackupModal();
+            showToast(`已匯入 ${imported.length} 個項目`);
+        }
+
+        // Navigation Tabs
+        function switchTab(targetViewId, tabBtn) {
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('text-zinc-900', 'dark:text-zinc-100');
+                btn.classList.add('text-gray-400');
+            });
+            tabBtn.classList.add('text-zinc-900', 'dark:text-zinc-100');
+            tabBtn.classList.remove('text-gray-400');
+
+            ['view-items', 'view-calendar', 'view-stats'].forEach(vId => {
+                document.getElementById(vId).classList.toggle('hidden', vId !== targetViewId);
+            });
+
+            if (targetViewId === 'view-calendar') renderCalendar();
+            if (targetViewId === 'view-stats') renderStats();
+        }
+
+        // Rendering Functions
+        function renderAll() {
+            renderCategoryPills();
+            renderCards();
+            renderStatsSummary();
+            refreshIcons();
+        }
+
+        function renderStatsSummary() {
+            document.getElementById('stat-summary').textContent = `共 ${items.length} 個項目`;
+            
+            let recentCount = 0;
+            const todayStr = getFormattedDate(new Date());
+            items.forEach(item => {
+                (item.logs || []).forEach(l => {
+                    const diff = calculateDaysDiff(l.date, todayStr);
+                    if (diff !== null && diff >= 0 && diff <= 7) {
+                        recentCount++;
+                    }
+                });
+            });
+            document.getElementById('stat-recent').textContent = `最近 7 天完成 ${recentCount} 次`;
+        }
+
+        function renderCategoryPills() {
+            const categoryPills = document.getElementById('category-pills');
+            if (items.length === 0) {
+                categoryPills.innerHTML = '';
+                return;
+            }
+
+            const categories = Array.from(new Set(items.map(i => i.category || '家事')));
+            
+            let html = `
+                <button onclick="setCategoryFilter('ALL')" class="px-3 py-1 text-xs rounded-xl font-medium shrink-0 transition-colors ${currentFilterCategory === 'ALL' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-gray-200'}">
+                    全部
+                </button>
+            `;
+
+            categories.forEach(cat => {
+                const isActive = currentFilterCategory === cat;
+                html += `
+                    <button onclick="setCategoryFilter('${cat}')" class="px-3 py-1 text-xs rounded-xl font-medium shrink-0 transition-colors ${isActive ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-gray-200'}">
+                        ${escapeHtml(cat)}
+                    </button>
+                `;
+            });
+
+            categoryPills.innerHTML = html;
+        }
+
+        function setCategoryFilter(cat) {
+            currentFilterCategory = cat;
+            renderCategoryPills();
+            renderCards();
+        }
+
+        function renderCards() {
+            const cardsContainer = document.getElementById('cards-container');
+            const emptyState = document.getElementById('empty-state');
+            const searchQuery = (document.getElementById('search-input').value || '').trim().toLowerCase();
+            const sortMode = document.getElementById('sort-select').value;
+
+            let filtered = items.filter(item => {
+                const matchCat = currentFilterCategory === 'ALL' || (item.category || '家事') === currentFilterCategory;
+                const matchSearch = item.title.toLowerCase().includes(searchQuery);
+                return matchCat && matchSearch;
+            });
+
+            filtered = filtered.map(item => {
+                const latestDate = getLatestLogDate(item);
+                const daysElapsed = latestDate ? calculateDaysDiff(latestDate) : 9999;
+                return { ...item, latestDate, daysElapsed };
+            });
+
+            filtered.sort((a, b) => {
+                if (sortMode === 'days-desc') return b.daysElapsed - a.daysElapsed;
+                if (sortMode === 'days-asc') return a.daysElapsed - b.daysElapsed;
+                if (sortMode === 'title') return a.title.localeCompare(b.title, 'zh-TW');
+                return 0;
+            });
+
+            if (filtered.length === 0) {
+                cardsContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            cardsContainer.innerHTML = filtered.map(item => {
+                const daysText = item.latestDate !== null ? `${item.daysElapsed} 天` : '未有紀錄';
+                const dateSubtext = item.latestDate ? `上次：${item.latestDate}` : '尚未建立日誌';
+                
+                return `
+                    <div onclick="openDetailModal('${item.id}')" class="group relative bg-white dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 rounded-2xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 dark:text-zinc-100 text-sm tracking-tight">${escapeHtml(item.title)}</h3>
+                                        <div class="flex items-center space-x-1.5 mt-0.5">
+                                            <span class="text-[10px] text-gray-500 dark:text-zinc-400 font-medium">${escapeHtml(item.category || '家事')}</span>
+                                            ${item.targetInterval ? `<span class="text-[10px] text-gray-400 dark:text-zinc-500">• 約 ${item.targetInterval} 天一次</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-right">
+                                    <span class="inline-block px-2.5 py-1 rounded-xl text-xs font-bold bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-zinc-200">
+                                        距今 ${daysText}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-100 dark:border-zinc-800/60 flex items-center justify-between text-xs text-gray-400 dark:text-zinc-500">
+                            <span>${dateSubtext}</span>
+                            <button onclick="event.stopPropagation(); quickLogToday('${item.id}')" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-zinc-300 transition-colors flex items-center space-x-1" title="今天完成了">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                <span class="text-[11px] font-medium hidden sm:inline">今天完成</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            refreshIcons();
+        }
+
+        function quickLogToday(itemId) {
+            addLogToItem(itemId, getFormattedDate(new Date()), '今日快速完成');
+        }
+
+        function addLogToItem(itemId, dateStr, note = '') {
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (!item.logs) item.logs = [];
+
+            const existingIndex = item.logs.findIndex(l => l.date === dateStr);
+            if (existingIndex >= 0) {
+                item.logs[existingIndex].note = note || item.logs[existingIndex].note;
+            } else {
+                item.logs.push({
+                    id: 'log-' + Date.now() + '-' + Math.random().toString(36).substr(2,4),
+                    date: dateStr,
+                    note: note
+                });
+            }
+
+            item.logs.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            saveData();
+            showToast(`已紀錄：${item.title} (${dateStr})`);
+
+            if (activeModalItemId === itemId && !document.getElementById('detail-modal').classList.contains('hidden')) {
+                openDetailModal(itemId);
+            }
+        }
+
+        // Modal Handlers
+        function openDetailModal(itemId) {
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            activeModalItemId = itemId;
+            document.getElementById('modal-item-title').textContent = item.title;
+            document.getElementById('modal-item-category').textContent = item.category || '家事';
+            document.getElementById('modal-item-subtitle').textContent = item.targetInterval ? `預期目標：約每 ${item.targetInterval} 天一次` : '尚未設定預期頻率';
+
+            const latestDate = getLatestLogDate(item);
+            const daysElapsed = latestDate ? calculateDaysDiff(latestDate) : null;
+            document.getElementById('modal-days-count').textContent = daysElapsed !== null ? `${daysElapsed} 天` : '尚無紀錄';
+
+            const timelineContainer = document.getElementById('modal-timeline');
+            const sortedLogs = [...(item.logs || [])].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            if (sortedLogs.length === 0) {
+                timelineContainer.innerHTML = '<p class="text-xs text-gray-400 py-2">目前無任何歷史紀錄，請利用上方按鈕新增。</p>';
+            } else {
+                timelineContainer.innerHTML = sortedLogs.map((log, idx) => {
+                    let gapText = '';
+                    if (idx < sortedLogs.length - 1) {
+                        const gapDays = calculateDaysDiff(sortedLogs[idx + 1].date, log.date);
+                        gapText = `（與上次相隔 ${gapDays} 天）`;
+                    } else {
+                        gapText = '（首次紀錄）';
+                    }
+
+                    return `
+                        <div class="relative group">
+                            <div class="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-zinc-900 dark:bg-zinc-100 ring-4 ring-white dark:ring-zinc-900"></div>
+                            <div class="bg-gray-50 dark:bg-zinc-800/40 p-3 rounded-xl border border-gray-100 dark:border-zinc-800/80 flex items-center justify-between">
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs font-bold text-gray-900 dark:text-zinc-100">${log.date}</span>
+                                        <span class="text-[10px] text-gray-400">${gapText}</span>
+                                    </div>
+                                    ${log.note ? `<p class="text-xs text-gray-600 dark:text-zinc-400 mt-1">${escapeHtml(log.note)}</p>` : ''}
+                                </div>
+                                <button onclick="deleteLogEntry('${item.id}', '${log.id}')" class="p-1 text-gray-400 hover:text-red-500 transition-colors" title="刪除此筆紀錄">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+            refreshIcons();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            activeModalItemId = null;
+        }
+
+        function handleModalQuickToday() {
+            if (activeModalItemId) {
+                addLogToItem(activeModalItemId, getFormattedDate(new Date()), '今天完成');
+            }
+        }
+
+        function handleBackdateSubmit() {
+            if (!activeModalItemId) return;
+            const dateVal = document.getElementById('backdate-picker').value;
+            const noteVal = document.getElementById('backdate-note').value;
+            if (!dateVal) {
+                showToast('請選擇日期');
+                return;
+            }
+            addLogToItem(activeModalItemId, dateVal, noteVal);
+            document.getElementById('backdate-note').value = '';
+        }
+
+        function deleteLogEntry(itemId, logId) {
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            item.logs = item.logs.filter(l => l.id !== logId);
+            saveData();
+            openDetailModal(itemId);
+            showToast('已移除該筆紀錄');
+        }
+
+        function handleActiveItemEdit() {
+            const item = items.find(i => i.id === activeModalItemId);
+            if (item) {
+                closeDetailModal();
+                openItemFormModal(item);
+            }
+        }
+
+        // Add / Edit Item Form
+        function openItemFormModal(item = null) {
+            const isEdit = !!item;
+            document.getElementById('form-modal-title').textContent = isEdit ? '編輯家事項目' : '新增家事追蹤項目';
+            document.getElementById('form-item-id').value = isEdit ? item.id : '';
+            document.getElementById('form-title').value = isEdit ? item.title : '';
+            document.getElementById('form-category').value = isEdit ? (item.category || '') : '家事';
+            document.getElementById('form-interval').value = isEdit ? (item.targetInterval || '') : '14';
+            
+            const initialDateContainer = document.getElementById('initial-date-container');
+            const deleteBtn = document.getElementById('btn-delete-item-form');
+
+            if (isEdit) {
+                initialDateContainer.classList.add('hidden');
+                deleteBtn.classList.remove('hidden');
+            } else {
+                initialDateContainer.classList.remove('hidden');
+                deleteBtn.classList.add('hidden');
+                document.getElementById('form-initial-date').value = getFormattedDate(new Date());
+            }
+
+            document.getElementById('item-form-modal').classList.remove('hidden');
+        }
+
+        function closeItemFormModal() {
+            document.getElementById('item-form-modal').classList.add('hidden');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const itemId = document.getElementById('form-item-id').value;
+            const title = document.getElementById('form-title').value.trim();
+            const category = document.getElementById('form-category').value.trim() || '家事';
+            const intervalVal = document.getElementById('form-interval').value;
+            const targetInterval = intervalVal ? parseInt(intervalVal, 10) : null;
+
+            if (itemId) {
+                const item = items.find(i => i.id === itemId);
+                if (item) {
+                    item.title = title;
+                    item.category = category;
+                    item.targetInterval = targetInterval;
+                }
+            } else {
+                const initialDate = document.getElementById('form-initial-date').value;
+                const newItem = {
+                    id: 'item-' + Date.now(),
+                    title,
+                    category,
+                    targetInterval,
+                    logs: initialDate ? [{ id: 'log-' + Date.now(), date: initialDate, note: '建立紀錄' }] : []
+                };
+                items.push(newItem);
+            }
+
+            saveData();
+            closeItemFormModal();
+            showToast('已儲存家事項目');
+        }
+
+        // Calendar Logic
+        function changeCalMonth(offset) {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + offset);
+            renderCalendar();
+        }
+
+        function resetCalToday() {
+            calendarCurrentDate = new Date();
+            calendarSelectedDateStr = getFormattedDate(new Date());
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
+
+            document.getElementById('calendar-month-year').textContent = `${year} 年 ${month + 1} 月`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startingDayOfWeek = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+
+            const daysContainer = document.getElementById('calendar-days');
+            daysContainer.innerHTML = '';
+
+            const logMap = {};
+            items.forEach(item => {
+                (item.logs || []).forEach(log => {
+                    if (!logMap[log.date]) logMap[log.date] = [];
+                    logMap[log.date].push({ itemTitle: item.title, note: log.note });
+                });
+            });
+
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'h-10 rounded-xl bg-transparent';
+                daysContainer.appendChild(emptyCell);
+            }
+
+            const todayStr = getFormattedDate(new Date());
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateStr = getFormattedDate(dateObj);
+                const hasLogs = logMap[dateStr] && logMap[dateStr].length > 0;
+                const isSelected = dateStr === calendarSelectedDateStr;
+                const isToday = dateStr === todayStr;
+
+                const dayCell = document.createElement('button');
+                dayCell.className = `h-10 rounded-xl flex flex-col items-center justify-center relative text-xs font-medium transition-all ${
+                    isSelected ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold' : 
+                    isToday ? 'border border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100' : 'hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-700 dark:text-zinc-300'
+                }`;
+
+                dayCell.innerHTML = `
+                    <span>${day}</span>
+                    ${hasLogs ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white dark:bg-zinc-900' : 'bg-blue-500'} absolute bottom-1"></span>` : ''}
+                `;
+
+                dayCell.onclick = () => {
+                    calendarSelectedDateStr = dateStr;
+                    renderCalendar();
+                };
+
+                daysContainer.appendChild(dayCell);
+            }
+
+            renderCalendarDayLogs(logMap[calendarSelectedDateStr] || []);
+        }
+
+        function renderCalendarDayLogs(dayLogs) {
+            const container = document.getElementById('calendar-date-logs');
+            document.getElementById('calendar-selected-date-title').textContent = `${calendarSelectedDateStr} 的完成紀錄 (${dayLogs.length} 筆)`;
+
+            if (dayLogs.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 py-2">該日期沒有任何完成紀錄。</p>';
+                return;
+            }
+
+            container.innerHTML = dayLogs.map(l => `
+                <div class="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-200/60 dark:border-zinc-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div>
+                            <span class="text-xs font-bold text-gray-900 dark:text-zinc-100">${escapeHtml(l.itemTitle)}</span>
+                            ${l.note ? `<p class="text-[11px] text-gray-500 dark:text-zinc-400">${escapeHtml(l.note)}</p>` : ''}
+                        </div>
+                    </div>
+                    <span class="text-[10px] bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400 px-2 py-0.5 rounded-full font-medium">已完成</span>
+                </div>
+            `).join('');
+        }
+
+        // Stats Logic
+        function renderStats() {
+            document.getElementById('stat-total-items').textContent = items.length;
+
+            let totalLogCount = 0;
+            items.forEach(i => totalLogCount += (i.logs || []).length);
+            document.getElementById('stat-total-logs').textContent = totalLogCount;
+
+            const freqListContainer = document.getElementById('stats-frequency-list');
+
+            if (items.length === 0) {
+                freqListContainer.innerHTML = '<p class="text-xs text-gray-400 py-4 text-center">目前尚未有家事資料，請新增項目後查看統計。</p>';
+                return;
+            }
+
+            freqListContainer.innerHTML = items.map(item => {
+                const logs = item.logs || [];
+                let avgDaysText = '資料不足';
+
+                if (logs.length >= 2) {
+                    const sorted = [...logs].sort((a,b) => new Date(a.date) - new Date(b.date));
+                    const totalDays = Math.max(1, calculateDaysDiff(sorted[0].date, sorted[sorted.length - 1].date));
+                    const avgGap = (totalDays / (logs.length - 1)).toFixed(1);
+                    avgDaysText = `平均每 ${avgGap} 天一次`;
+                } else if (logs.length === 1) {
+                    avgDaysText = '僅 1 筆紀錄';
+                }
+
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-zinc-800/40 border border-gray-100 dark:border-zinc-800">
+                        <div class="flex items-center space-x-2.5">
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-900 dark:text-zinc-100">${escapeHtml(item.title)}</h4>
+                                <span class="text-[10px] text-gray-400">目標：${item.targetInterval ? `每 ${item.targetInterval} 天` : '未設定'}</span>
+                            </div>
+                        </div>
+                        <span class="text-xs font-medium text-gray-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-gray-200/60 dark:border-zinc-700">
+                            ${avgDaysText}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // On Page Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            document.getElementById('backdate-picker').value = getFormattedDate(new Date());
+            document.getElementById('form-initial-date').value = getFormattedDate(new Date());
+        });
+    </script>
+</body>
+</html>
